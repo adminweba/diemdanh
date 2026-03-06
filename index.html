@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điểm danh</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body,
+        html {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f0f2f5;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 1200px;
+            height: 96vh;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-side {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+        }
+
+        h2 {
+            color: #1a73e8;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .status-box {
+            background: #e7f3ff;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #1877f2;
+            font-size: 0.9rem;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        select,
+        input,
+        textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+        }
+
+        textarea {
+            flex-grow: 1;
+            resize: none;
+            min-height: 100px;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .btn-in {
+            background: #2ecc71;
+            color: white;
+            border: 3px solid transparent;
+        }
+
+        .btn-out {
+            background: #e67e22;
+            color: white;
+            border: 3px solid transparent;
+        }
+
+        .btn-copy {
+            background: #34495e;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .active-mode {
+            border-color: #000 !important;
+            transform: scale(1.02);
+        }
+
+        .output-side {
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #e1e4e8;
+            min-width: 0;
+        }
+
+        #preview {
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #000;
+            font-family: 'Consolas', monospace;
+            overflow-y: auto;
+            word-break: break-word;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="input-side">
+            <h2>📋 Điểm Danh Tự Động</h2>
+            <div id="currentTime" class="status-box">...</div>
+
+            <label>Họ và Tên:</label>
+            <select id="nameSelect" onchange="toggleCustomName()">
+                <option value="Trương Nhật Tân">Trương Nhật Tân</option>
+                <option value="Phan Quốc Huy">Phan Quốc Huy</option>
+                <option value="custom">Nhập tên khác...</option>
+            </select>
+            <input type="text" id="customName" placeholder="Gõ tên..." style="display:none; margin-top:5px;">
+
+            <label>Task công việc:</label>
+            <input type="text" id="taskInput" placeholder="Mô tả công việc...">
+            <label>Kết quả:</label>
+            <textarea id="resultInput" placeholder="Mô tả kết quả công việc..."></textarea>
+            <label>Link Proof:</label>
+            <input type="text" id="proofInput" placeholder="Link chứng minh (nếu có)...">
+
+            <div class="btn-group">
+                <button id="btnIn" class="btn-in" onclick="setMode('check in')">CHECK IN</button>
+                <button id="btnOut" class="btn-out" onclick="setMode('check out')">CHECK OUT</button>
+                <button class="btn-copy" onclick="copyText()">SAO CHÉP</button>
+            </div>
+        </div>
+
+        <div class="output-side">
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = '';
+        const shifts = [
+            { name: "8:00-11:30", start: 8, end: 11.5 },
+            { name: "14:00-17:00", start: 14, end: 17 },
+            { name: "22:00-24:00", start: 22, end: 24 }
+        ];
+
+        // Hàm tự động chọn chế độ NHƯNG KHÔNG lưu đè dữ liệu cũ
+        function autoSelectMode() {
+            const now = new Date();
+            const time = now.getHours() + now.getMinutes() / 60;
+            let mode = 'check in';
+
+            if ((time >= 10.5 && time <= 12.5) || (time >= 16 && time <= 18.5) || (time >= 23 || time <= 1.5)) mode = 'check out';
+            else if ((time >= 7 && time <= 9) || (time >= 13 && time <= 15) || (time >= 21 && time <= 22.66)) mode = 'check in';
+
+            if (currentMode === '') {
+                setMode(mode);
+            }
+        }
+
+        function getShift() {
+            const now = new Date();
+            const time = now.getHours() + now.getMinutes() / 60;
+            if (time >= 7 && time <= 12.5) return shifts[0];
+            if (time >= 13 && time <= 18.5) return shifts[1];
+            if (time >= 21 || time <= 1.5) return shifts[2];
+            return shifts[1];
+        }
+
+        function updateUI() {
+            const s = getShift();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB');
+            const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+
+            document.getElementById('currentTime').innerText = `Giờ: ${timeStr} | Ca: ${s.name}`;
+
+            const select = document.getElementById('nameSelect');
+            const name = (select.value === 'custom') ? document.getElementById('customName').value : select.value;
+
+            // XỬ LÝ: Nếu là Check-in thì bỏ qua các ô nhập liệu
+            if (currentMode === 'check in') {
+                document.getElementById('preview').innerText = `${name}- check in ${s.name} ${dateStr}`;
+            } else {
+                const task = document.getElementById('taskInput').value;
+                const result = document.getElementById('resultInput').value;
+                const proof = document.getElementById('proofInput').value;
+                const fixed = `+ 6/ Ecosystems Outliers: TỰ tìm Outliers trong Ecosystems của TtsVol  Liên Tục REALTIME 24/7 mở MỚI/NEW HÀNG NGÀN X000s iSSale services\n+ 7/ iHugeRevenue: đụng đến iHugeFreeEcosystemMoneyEvent GÌ ntn đâu vs Stakeholders đã chống sẵn\n+ 8/ 30p+: TỰ có trách nhiệm cho 30p+ để hỗ trợ CHUNG  Liên Tục REALTIME 24/7 mở MỚI/NEW HÀNG NGÀN X000s iSSale services\n+ 9/ iHugeImprove: hơn so với KẾT NỐI/KẾ THỪA/BOT Hóa ntn đâu\n+ 10/ Tránh Lỗi`;
+
+                document.getElementById('preview').innerText = `${name}- check out ${s.name} ${dateStr}\nTask: ${task}\nKết quả: ${result}\n\n${fixed}\nLink proof: ${proof}`;
+            }
+        }
+
+        function setMode(m) {
+            currentMode = m;
+            document.getElementById('btnIn').className = (m === 'check in') ? 'btn-in active-mode' : 'btn-in';
+            document.getElementById('btnOut').className = (m === 'check out') ? 'btn-out active-mode' : 'btn-out';
+
+            // XỬ LÝ QUAN TRỌNG: Khi bấm đổi mode hoặc tự nhảy mode, xóa sạch các ô nhập liệu để đảm bảo không lưu lịch sử
+            if (m === 'check in') {
+                document.getElementById('taskInput').value = '';
+                document.getElementById('resultInput').value = '';
+                document.getElementById('proofInput').value = '';
+            }
+            updateUI();
+        }
+
+        function toggleCustomName() {
+            const isCustom = document.getElementById('nameSelect').value === 'custom';
+            document.getElementById('customName').style.display = isCustom ? 'block' : 'none';
+            if (!isCustom) document.getElementById('customName').value = '';
+            updateUI();
+        }
+
+        function copyText() {
+            navigator.clipboard.writeText(document.getElementById('preview').innerText).then(() => alert("Đã copy!"));
+        }
+
+        ['taskInput', 'resultInput', 'proofInput', 'customName'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateUI);
+        });
+
+        // Chỉ tự động chọn mode lần đầu khi mở trang
+        autoSelectMode();
+
+        // Cập nhật đồng hồ và ca nhưng KHÔNG tự ý đổi mode làm mất dữ liệu đang gõ
+        setInterval(() => { updateUI(); }, 30000);
+    </script>
+</body>
+
+</html>
