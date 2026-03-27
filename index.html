@@ -483,11 +483,56 @@
     </div>
 
     <script>
-        let mode = '', isM = false, sIdx = -1;
-        let db = JSON.parse(localStorage.getItem('workData_v16')) || {};
+        // --- CẤU HÌNH ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVc0A7Z26LjaAw_NdJ2FjKtqbREdV1zVGUhLGSiFgaBxwGIfhhwAi5_0bdOf6FV2fh/exec";
+
+        let mode = '', isM = false, sIdx = -1, db = {};
         const shifts = [{ n: "8:00-11:30", d: 3.5 }, { n: "14:00-17:00", d: 3.0 }, { n: "22:00-24:00", d: 2.0 }];
 
-        // --- Custom Dialog Logic ---
+        // 1. TẢI DỮ LIỆU TỪ CLOUD (GOOGLE SHEETS)
+        // 1. TẢI DỮ LIỆU VÀ TỰ RESET GIAO DIỆN MỖI THỨ HAI
+        async function loadData() {
+            try {
+                const res = await fetch(SCRIPT_URL);
+                db = await res.json();
+
+                // LOGIC TỰ RESET TRÊN WEB MỖI THỨ HAI
+                const today = new Date();
+                const dayOfWeek = today.getDay(); // 0: CN, 1: Thứ 2...
+
+                // Nếu là Thứ Hai (1) thì xóa sạch db tạm thời trên trình duyệt người dùng
+                if (dayOfWeek === 1) {
+                    // Kiểm tra xem trong ngày hôm nay đã reset chưa (tránh reset liên tục)
+                    const lastReset = localStorage.getItem('lastWeeklyReset');
+                    const todayStr = today.toDateString();
+
+                    if (lastReset !== todayStr) {
+                        db = {}; // Xóa sạch dữ liệu hiển thị
+                        rS();
+                        localStorage.setItem('lastWeeklyReset', todayStr);
+                        console.log("Đầu tuần mới: Đã reset bảng hiển thị.");
+                    }
+                }
+
+                rS(); // Cập nhật danh sách tổng giờ bên phải
+                if (document.getElementById('adminBox').style.display === 'block') loadAdmin();
+            } catch (e) {
+                console.log("Đang kết nối dữ liệu...");
+            }
+        }
+
+        // 2. LƯU DỮ LIỆU LÊN CLOUD
+        async function saveData(name, hours, isReset = false) {
+            const payload = isReset ? { type: "reset" } : { name, hours };
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            });
+            setTimeout(loadData, 1500); // Tải lại sau 1.5s để cập nhật giao diện
+        }
+
+        // --- LOGIC HIỂN THỊ ---
         let confirmCallback = null;
         function askConfirm(msg, cb) {
             document.getElementById('confirmMsg').innerText = msg;
@@ -519,22 +564,20 @@
             const l = document.getElementById('sList');
             l.innerHTML = '';
             Object.entries(db).sort().forEach(([u, h]) => {
-                l.innerHTML += `<div class="stats-item"><span>${u}</span><b style="color:var(--s)">${h.toFixed(1)}h</b></div>`;
+                l.innerHTML += `<div class="stats-item"><span>${u}</span><b style="color:var(--s)">${Number(h).toFixed(1)}h</b></div>`;
             });
         }
 
+        // HÀM UPDATE PREVIEW - GIỮ NGUYÊN ĐỊNH DẠNG REPORT CỦA BẠN
         function uU() {
             const now = new Date();
             const h = now.getHours() + now.getMinutes() / 60;
             const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
-
             document.getElementById('currT').innerText = `GIỜ: ${now.toLocaleTimeString('vi-VN')} | CA: ${s.n}`;
 
             const idx = shifts.indexOf(s);
             document.querySelectorAll('.shift-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-
             if (!mode) mode = ((h >= 11 && h <= 12.5) || (h >= 16.5 && h <= 18.5) || (h >= 23.5 || h <= 1.5)) ? 'check out' : 'check in';
-
             document.getElementById('bIn').classList.toggle('active-mode', mode === 'check in');
             document.getElementById('bOut').classList.toggle('active-mode', mode === 'check out');
 
@@ -547,6 +590,7 @@
             if (mode === 'check in') {
                 document.getElementById('preview').innerText = `${n}- check in ${s.n} ${d}`;
             } else {
+                // GIỮ NGUYÊN NỘI DUNG BẠN YÊU CẦU
                 document.getElementById('preview').innerText = `${n}- check out ${s.n} ${d}
 Task: ${tk}
 Kết quả: ${rs}
@@ -561,14 +605,16 @@ ${lks}`;
             }
         }
 
-        function cT() {
-            navigator.clipboard.writeText(document.getElementById('preview').innerText).then(() => {
+        async function cT() {
+            const textToCopy = document.getElementById('preview').innerText;
+            navigator.clipboard.writeText(textToCopy).then(async () => {
                 if (mode === 'check out') {
                     const n = document.getElementById('nSel').value === 'custom' ? document.getElementById('cName').value : document.getElementById('nSel').value;
                     if (n && n.trim() !== '') {
                         const h = new Date().getHours() + new Date().getMinutes() / 60;
                         const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
-                        db[n] = (db[n] || 0) + s.d; save();
+                        db[n] = (Number(db[n]) || 0) + s.d;
+                        await saveData(n, db[n]); // Lưu lên Google Sheet
                     }
                     document.getElementById('bSave').disabled = true;
                     document.getElementById('waitOverlay').style.display = 'flex';
@@ -581,13 +627,14 @@ ${lks}`;
                             document.getElementById('tIn').value = ""; document.getElementById('rIn').value = "";
                             document.getElementById('pCont').innerHTML = '<div class="proof-item"><input type="text" class="p-url" placeholder="Link 1..." oninput="uU()"></div>';
                             document.getElementById('bSave').disabled = false;
-                            mode = 'check in'; uU(); launchConfetti(); showToast("Đã lưu giờ & Chúc mừng bạn hoàn thành ca!");
+                            mode = 'check in'; uU(); launchConfetti(); showToast("Đã lưu lên website!");
                         }
                     }, 1000);
                 } else { showToast("Đã copy Check-in thành công!"); launchConfetti(); }
             });
         }
 
+        // --- ADMIN ---
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12') {
                 e.preventDefault();
@@ -602,27 +649,26 @@ ${lks}`;
             if (document.getElementById('passCode').value === '2003') {
                 document.getElementById('authBox').style.display = 'none';
                 document.getElementById('adminBox').style.display = 'block'; loadAdmin();
-            } else { showToast("Mã xác thực không đúng!", "#ef4444"); }
+            } else { showToast("Sai mã!", "#ef4444"); }
         }
 
         function loadAdmin() {
             const list = document.getElementById('adminList'); list.innerHTML = '';
             const h = new Date().getHours() + new Date().getMinutes() / 60;
-            const currentShift = (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
+            const curS = (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
             Object.entries(db).forEach(([name, hours]) => {
                 const div = document.createElement('div'); div.className = 'admin-item';
-                div.innerHTML = `<span>${name}: <b>${hours.toFixed(1)}h</b></span>
-                    <div>
-                        <button class="btn-adm btn-minus" onclick="adjTime('${name}', -${currentShift.d})">-${currentShift.d}h</button>
-                        <button class="btn-adm btn-del-user" onclick="askConfirm('Xóa giờ của ${name}?', () => { delete db['${name}']; save(); loadAdmin(); showToast('Đã xóa nhân sự.'); })">XÓA</button>
-                    </div>`;
+                div.innerHTML = `<span>${name}: <b>${Number(hours).toFixed(1)}h</b></span>
+            <div>
+                <button class="btn-adm btn-minus" onclick="adjTime('${name}', -${curS.d})">-${curS.d}h</button>
+                <button class="btn-adm btn-del-user" onclick="askConfirm('Xóa ${name}?', () => { delete db['${name}']; saveData(null, null, false); loadAdmin(); })">XÓA</button>
+            </div>`;
                 list.appendChild(div);
             });
         }
 
-        function adjTime(n, v) { db[n] = Math.max(0, db[n] + v); save(); loadAdmin(); showToast("Đã điều chỉnh giờ."); }
-        function resetAll() { askConfirm("Làm mới toàn bộ dữ liệu tuần?", () => { db = {}; save(); closeAdmin(); showToast("Đã Reset dữ liệu tuần."); }); }
-        function save() { localStorage.setItem('workData_v16', JSON.stringify(db)); rS(); }
+        function adjTime(n, v) { db[n] = Math.max(0, Number(db[n]) + v); saveData(n, db[n]); loadAdmin(); }
+        function resetAll() { askConfirm("Reset toàn bộ dữ liệu tuần?", () => { db = {}; saveData(null, null, true); closeAdmin(); }); }
         function closeAdmin() { document.getElementById('adminOverlay').style.display = 'none'; }
         function tN() { document.getElementById('cName').style.display = (document.getElementById('nSel').value === 'custom' ? 'block' : 'none'); uU(); }
         function mS(i) { isM = true; sIdx = i; uU(); }
@@ -633,13 +679,12 @@ ${lks}`;
             pc.appendChild(d); pc.scrollTop = pc.scrollHeight; uU();
         }
 
-        rS(); setInterval(uU, 1000);
+        // KHỞI ĐỘNG
+        loadData();
+        setInterval(loadData, 30000); // Tự động đồng bộ mỗi 30 giây
+        setInterval(uU, 1000);
         ['nSel', 'cName', 'tIn', 'rIn'].forEach(id => document.getElementById(id).addEventListener('input', uU));
         document.getElementById('passCode').onkeypress = (e) => { if (e.key === 'Enter') verifyPass(); };
-
-        document.querySelectorAll('input').forEach(input => {
-            input.setAttribute('autocomplete', 'off');
-        });
     </script>
 </body>
 
