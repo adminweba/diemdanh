@@ -3,17 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Điểm Danh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Điểm Danh</title>
     <link rel="icon" href="logo.png?v=2" type="image/png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4361ee;
-            --success: #10b981;
-            --warning: #f59e0b;
+            --p: #4361ee;
+            --s: #10b981;
+            --w: #f59e0b;
             --bg: #f3f4f6;
-            --dark: #1f2937;
+            --d: #1f2937;
         }
 
         * {
@@ -21,376 +21,336 @@
             margin: 0;
             padding: 0;
             font-family: 'Inter', sans-serif;
+            user-select: none;
         }
 
         body {
-            background-color: var(--bg);
+            background: var(--bg);
             height: 100vh;
+            width: 100vw;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
             overflow: hidden;
         }
 
         .container {
             background: white;
             width: 100%;
-            max-width: 1150px;
-            height: 92vh;
-            max-height: 750px;
+            height: 100%;
             display: grid;
-            grid-template-columns: 400px 1fr;
-            border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            grid-template-columns: 380px 1fr 320px;
+        }
+
+        .column {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e5e7eb;
             overflow: hidden;
         }
 
-        /* --- Side Trái: Form --- */
-        .input-side {
+        .side-p {
             padding: 20px;
-            border-right: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            height: 100%;
-            overflow-y: auto;
-            /* Cho phép cuộn form trên màn hình cực nhỏ */
         }
 
-        h2 {
-            font-size: 1.1rem;
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 2px;
+        .form-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
         }
 
         .status-box {
             background: #f1f5ff;
-            padding: 8px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 10px;
             text-align: center;
             font-weight: 700;
-            font-size: 0.85rem;
-            color: var(--primary);
+            color: var(--p);
             border: 1px solid #dbeafe;
-        }
-
-        .field-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            font-size: 13px;
+            margin-bottom: 5px;
         }
 
         label {
-            font-size: 0.75rem;
+            font-size: 11px;
             font-weight: 700;
             color: #4b5563;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            display: block;
         }
 
         select,
         input,
         textarea {
-            padding: 8px 12px;
+            padding: 10px;
             border: 1.5px solid #e5e7eb;
             border-radius: 8px;
             font-size: 13px;
             outline: none;
-            transition: 0.2s;
-            background: #fff;
-        }
-
-        select:focus,
-        input:focus,
-        textarea:focus {
-            border-color: var(--primary);
+            width: 100%;
         }
 
         textarea {
-            height: 70px;
+            height: 90px;
             resize: none;
+            overflow-y: auto;
         }
 
-        /* --- Vùng cuộn Link Proof --- */
-        .proof-wrapper {
+        .proof-section {
             display: flex;
             flex-direction: column;
-            min-height: 100px;
-            max-height: 150px;
+            gap: 5px;
+            overflow: hidden;
+            max-height: 180px;
         }
 
-        .proof-list {
-            flex: 1;
+        .proof-scroll {
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            padding: 2px 5px 2px 0;
+            gap: 5px;
+            padding-right: 5px;
+            flex: 1;
+        }
+
+        .proof-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .proof-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
         }
 
         .proof-item {
             display: flex;
-            gap: 6px;
+            gap: 5px;
+            flex-shrink: 0;
         }
 
-        .proof-item input {
-            flex: 1;
-        }
-
-        .btn-remove {
+        .btn-del {
             background: #fee2e2;
             color: #ef4444;
             border: none;
-            padding: 0 10px;
+            padding: 0 12px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
         }
 
-        .btn-add {
-            background: #f8fafc;
-            color: var(--primary);
-            border: 1px dashed var(--primary);
-            padding: 6px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        .btn-add-link {
+            padding: 8px;
+            font-size: 11px;
             cursor: pointer;
-            text-align: center;
-            margin-top: 6px;
+            background: white;
+            border: 1px dashed var(--p);
+            color: var(--p);
+            border-radius: 8px;
+            font-weight: 700;
+            flex-shrink: 0;
         }
 
-        /* --- Buttons --- */
-        .btn-action-group {
+        .shift-btn {
+            padding: 8px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .shift-btn.active {
+            background: var(--p);
+            color: white;
+            border-color: var(--p);
+        }
+
+        .btn-group {
+            margin-top: auto;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            margin-top: auto;
             padding-top: 10px;
         }
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
         .btn {
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
             font-size: 0.8rem;
+            border-bottom: 4px solid rgba(0, 0, 0, 0.2);
         }
 
         .btn-in {
-            background: var(--success);
+            background: var(--s);
             color: white;
         }
 
         .btn-out {
-            background: var(--warning);
+            background: var(--w);
             color: white;
         }
 
         .btn-copy {
-            background: var(--dark);
+            background: var(--d);
             color: white;
-            width: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .active-mode {
-            box-shadow: 0 0 0 3px #000;
-            transform: scale(0.98);
+            outline: 4px solid #000;
         }
 
-        /* --- Side Phải: Preview --- */
         .output-side {
             background: #111827;
             padding: 25px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+            overflow-y: auto;
         }
 
         #preview {
             white-space: pre-wrap;
             font-family: 'Consolas', monospace;
-            font-size: 13.5px;
-            line-height: 1.5;
+            font-size: 14px;
             color: #e5e7eb;
-            overflow-y: auto;
-            height: 100%;
+            line-height: 1.6;
         }
 
-        /* --- TOAST --- */
-        #toast {
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+        }
+
+        .overlay {
             position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background: var(--success);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
             color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(150px);
-            transition: 0.3s;
-            z-index: 9999;
         }
 
-        #toast.show {
-            transform: translateY(0);
-        }
-
-        /* --- RESPONSIVE: ĐIỆN THOẠI --- */
-        @media (max-width: 850px) {
-            body {
-                overflow-y: auto;
-                height: auto;
-                padding: 10px;
-            }
-
+        @media (max-width: 1024px) {
             .container {
                 grid-template-columns: 1fr;
-                /* Chuyển thành 1 cột */
+            }
+
+            .column {
                 height: auto;
-                max-height: none;
-                display: block;
             }
-
-            .input-side {
-                border-right: none;
-                border-bottom: 1px solid #e5e7eb;
-                height: auto;
-                overflow: visible;
-            }
-
-            .output-side {
-                height: 400px;
-                /* Cố định chiều cao preview trên mobile */
-            }
-
-            .proof-wrapper {
-                max-height: none;
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 10px;
         }
     </style>
 </head>
 
-<body>
-
-    <div id="toast">Đã sao chép thành công!</div>
+<body oncontextmenu="return false;">
+    <div id="waitOverlay" class="overlay">
+        <h3>LÀM MỚI HỆ THỐNG...</h3>
+        <div id="count" style="font-size:100px; font-weight:800; color:var(--w); margin:20px 0;">8</div>
+    </div>
 
     <div class="container">
-        <div class="input-side">
-            <h2>ĐIỂM DANH</h2>
-            <div id="currentTime" class="status-box">...</div>
+        <div class="column side-p">
+            <h2 style="color:var(--p); text-align:center; margin-bottom:5px;">ĐIỂM DANH</h2>
+            <div id="currT" class="status-box">...</div>
+            <div class="form-area">
+                <div class="field-group"><label>Ca làm</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px;"><button class="shift-btn"
+                            onclick="mS(0)">SÁNG</button><button class="shift-btn" onclick="mS(1)">CHIỀU</button><button
+                            class="shift-btn" onclick="mS(2)">TỐI</button></div>
+                </div>
+                <div class="field-group">
+                    <label>Nhân sự</label>
+                    <select id="nSel" onchange="tN()">
+                        <option value="Trương Nhật Tân">Trương Nhật Tân</option>
+                        <option value="Phan Quốc Huy">Phan Quốc Huy</option>
+                        <option value="Nguyễn Đức Khải">Nguyễn Đức Khải</option>
+                        <option value="custom">-- KHÁC --</option>
+                    </select>
+                    <input type="text" id="cName" placeholder="Nhập họ và tên..." style="display:none; margin-top:5px;">
+                </div>
+                <div class="field-group"><label>Task</label><input type="text" id="tIn" placeholder="Nội dung task...">
+                </div>
+                <div class="field-group"><label>Kết quả</label><textarea id="rIn"
+                        placeholder="Kết quả đạt được..."></textarea></div>
 
-            <div class="field-group">
-                <label>Nhân sự</label>
-                <select id="nameSelect" onchange="toggleCustomName()">
-                    <option value="Trương Nhật Tân">Trương Nhật Tân</option>
-                    <option value="Phan Quốc Huy">Phan Quốc Huy</option>
-                    <option value="Nguyễn Đức Khải">Nguyễn Đức Khải</option>
-                </select>
-                <input type="text" id="customName" placeholder="Gõ tên..." style="display:none; margin-top:5px;">
-            </div>
-
-            <div class="field-group">
-                <label>Task công việc</label>
-                <input type="text" id="taskInput" placeholder="Nội dung task...">
-            </div>
-
-            <div class="field-group">
-                <label>Kết quả chi tiết</label>
-                <textarea id="resultInput" placeholder="Kết quả đạt được..."></textarea>
-            </div>
-
-            <div class="proof-wrapper">
-                <label>Link Proof</label>
-                <div id="proofContainer" class="proof-list">
-                    <div class="proof-item">
-                        <input type="text" class="proof-url" placeholder="Dán link 1..." oninput="updateUI()">
+                <div class="proof-section">
+                    <label>Link Proof</label>
+                    <div id="pCont" class="proof-scroll">
+                        <div class="proof-item"><input type="text" class="p-url" placeholder="Link 1..." oninput="uU()">
+                        </div>
                     </div>
+                    <button class="btn-add-link" onclick="aP()">+ THÊM LINK TIẾP THEO</button>
                 </div>
-                <div class="btn-add" onclick="addProofField()">+ Thêm link mới</div>
             </div>
-
-            <div class="btn-action-group">
-                <div class="row">
-                    <button id="btnIn" class="btn btn-in" onclick="setMode('check in')">CHECK IN</button>
-                    <button id="btnOut" class="btn btn-out" onclick="setMode('check out')">CHECK OUT</button>
+            <div class="btn-group">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button id="bIn" class="btn btn-in" onclick="sM('check in')">CHECK IN</button>
+                    <button id="bOut" class="btn btn-out" onclick="sM('check out')">CHECK OUT</button>
                 </div>
-                <button class="btn btn-copy" onclick="copyText()">SAO CHÉP KẾT QUẢ</button>
+                <button id="bSave" class="btn btn-copy" onclick="cT()">SAO CHÉP & LƯU GIỜ</button>
             </div>
         </div>
-
-        <div class="output-side">
+        <div class="column output-side">
             <div id="preview"></div>
+        </div>
+        <div class="column side-p">
+            <h3 style="font-size:12px; border-bottom:2px solid #f3f4f6; padding-bottom:10px;">TỔNG GIỜ TUẦN</h3>
+            <div id="sList" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
+            <div style="font-size:10px; color:#9ca3af; margin-top:auto;">Reset: 03:00 Thứ 2</div>
         </div>
     </div>
 
     <script>
-        let currentMode = '';
-        const shifts = [
-            { name: "8:00-11:30", start: 8, end: 11.5 },
-            { name: "14:00-17:00", start: 14, end: 17 },
-            { name: "22:00-24:00", start: 22, end: 24 }
-        ];
+        let mode = '', isM = false, sIdx = -1, db = JSON.parse(localStorage.getItem('workData_v16')) || {};
+        const shifts = [{ n: "8:00-11:30", d: 3.5 }, { n: "14:00-17:00", d: 3.0 }, { n: "22:00-24:00", d: 2.0 }];
 
-        function addProofField() {
-            const container = document.getElementById('proofContainer');
-            const div = document.createElement('div');
-            div.className = 'proof-item';
-            div.innerHTML = `<input type="text" class="proof-url" placeholder="Link..." oninput="updateUI()">
-                             <button class="btn-remove" onclick="this.parentElement.remove(); updateUI();">✕</button>`;
-            container.appendChild(div);
-            updateUI();
-        }
+        function rS() { const l = document.getElementById('sList'); l.innerHTML = ''; Object.entries(db).sort().forEach(([u, h]) => { l.innerHTML += `<div class="stats-item"><span>${u}</span><b style="color:var(--s)">${h.toFixed(1)}h</b></div>`; }); }
 
-        function getShift() {
-            const now = new Date();
-            const time = now.getHours() + now.getMinutes() / 60;
-            if (time >= 7 && time <= 12.5) return shifts[0];
-            if (time >= 13 && time <= 18.5) return shifts[1];
-            if (time >= 21 || time <= 1.5) return shifts[2];
-            return shifts[1];
-        }
+        function uU() {
+            const h = new Date().getHours() + new Date().getMinutes() / 60;
+            const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
+            document.getElementById('currT').innerText = `GIỜ: ${new Date().toLocaleTimeString('vi-VN')} | CA: ${s.n}`;
+            const idx = shifts.indexOf(s);
+            document.querySelectorAll('.shift-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+            if (!mode) mode = ((h >= 11 && h <= 12.5) || (h >= 16.5 && h <= 18.5) || (h >= 23.5 || h <= 1.5)) ? 'check out' : 'check in';
+            document.getElementById('bIn').classList.toggle('active-mode', mode === 'check in');
+            document.getElementById('bOut').classList.toggle('active-mode', mode === 'check out');
 
-        function updateUI() {
-            const s = getShift();
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-GB');
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            // Xử lý lấy tên: nếu chọn custom thì lấy từ ô input cName
+            const n = document.getElementById('nSel').value === 'custom' ? document.getElementById('cName').value : document.getElementById('nSel').value;
 
-            document.getElementById('currentTime').innerText = `Giờ: ${timeStr} | Ca: ${s.name}`;
+            const d = new Date().toLocaleDateString('en-GB');
+            const tk = document.getElementById('tIn').value, rs = document.getElementById('rIn').value;
+            const lks = Array.from(document.querySelectorAll('.p-url')).map(i => i.value.trim()).filter(v => v !== '').join('\n');
 
-            const name = (document.getElementById('nameSelect').value === 'custom')
-                ? document.getElementById('customName').value : document.getElementById('nameSelect').value;
-
-            if (currentMode === 'check in') {
-                document.getElementById('preview').innerText = `${name}- check in ${s.name.replace('-', ' ')} ${dateStr}`;
-            } else {
-                const task = document.getElementById('taskInput').value;
-                const result = document.getElementById('resultInput').value;
-                const links = Array.from(document.querySelectorAll('.proof-url')).map(i => i.value.trim()).filter(v => v !== '').join('\n');
-
-                document.getElementById('preview').innerText = `${name}- check out ${s.name.replace('-', ' ')} ${dateStr}
-Task: ${task}
-Kết quả: ${result}
+            document.getElementById('preview').innerText = mode === 'check in' ? `${n}- check in ${s.n} ${d}` :
+                `${n}- check out ${s.n} ${d}
+Task: ${tk}
+Kết quả: ${rs}
 
 + 6/ Ecosystems Outliers: TỰ tìm Outliers trong Ecosystems của TtsVol  Liên Tục REALTIME 24/7 mở MỚI/NEW HÀNG NGÀN X000s iSSale services
 + 7/ iHugeRevenue: đụng đến iHugeFreeEcosystemMoneyEvent GÌ ntn đâu vs Stakeholders đã chống sẵn
@@ -398,42 +358,62 @@ Kết quả: ${result}
 + 9/ iHugeImprove: hơn so với KẾT NỐI/KẾ THỪA/BOT Hóa ntn đâu
 + 10/ Tránh Lỗi
 Link proof:
-${links}`;
+${lks}`;
+        }
+
+        // Hàm hiện/ẩn ô nhập tên KHÁC
+        function tN() {
+            const sel = document.getElementById('nSel').value;
+            const cName = document.getElementById('cName');
+            if (sel === 'custom') {
+                cName.style.display = 'block';
+            } else {
+                cName.style.display = 'none';
+                cName.value = ''; // Xóa trắng khi không dùng
             }
+            uU(); // Cập nhật bản xem trước ngay
         }
 
-        function setMode(m) {
-            currentMode = m;
-            document.getElementById('btnIn').classList.toggle('active-mode', m === 'check in');
-            document.getElementById('btnOut').classList.toggle('active-mode', m === 'check out');
-            if (m === 'check in') {
-                document.getElementById('taskInput').value = '';
-                document.getElementById('resultInput').value = '';
-                document.querySelectorAll('.proof-url').forEach((el, index) => index === 0 ? el.value = '' : el.parentElement.remove());
-            }
-            updateUI();
-        }
-
-        function toggleCustomName() {
-            const isCustom = document.getElementById('nameSelect').value === 'custom';
-            document.getElementById('customName').style.display = isCustom ? 'block' : 'none';
-            updateUI();
-        }
-
-        function copyText() {
+        function cT() {
             navigator.clipboard.writeText(document.getElementById('preview').innerText).then(() => {
-                const t = document.getElementById('toast');
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 2000);
+                if (mode === 'check out') {
+                    const n = document.getElementById('nSel').value === 'custom' ? document.getElementById('cName').value : document.getElementById('nSel').value;
+                    if (n && n.trim() !== '') {
+                        const h = new Date().getHours() + new Date().getMinutes() / 60;
+                        const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]);
+                        db[n] = (db[n] || 0) + s.d; localStorage.setItem('workData_v16', JSON.stringify(db)); rS();
+                    }
+                    document.getElementById('bSave').disabled = true;
+                    document.getElementById('waitOverlay').style.display = 'flex';
+                    let tl = 8;
+                    const tm = setInterval(() => {
+                        tl--; document.getElementById('count').innerText = tl;
+                        if (tl <= 0) {
+                            clearInterval(tm);
+                            document.getElementById('waitOverlay').style.display = 'none';
+                            document.getElementById('tIn').value = "";
+                            document.getElementById('rIn').value = "";
+                            document.getElementById('pCont').innerHTML = '<div class="proof-item"><input type="text" class="p-url" placeholder="Link 1..." oninput="uU()"></div>';
+                            document.getElementById('bSave').disabled = false;
+                            mode = '';
+                            uU();
+                        }
+                    }, 1000);
+                }
             });
         }
-
-        ['taskInput', 'resultInput', 'customName'].forEach(id => document.getElementById(id).addEventListener('input', updateUI));
-
-        const h = new Date().getHours() + new Date().getMinutes() / 60;
-        setMode(((h >= 10.5 && h <= 12.5) || (h >= 16 && h <= 18.5) || (h >= 23 || h <= 1.5)) ? 'check out' : 'check in');
-
-        setInterval(updateUI, 1000);
+        function mS(i) { isM = true; sIdx = i; uU(); }
+        function sM(m) { mode = m; uU(); }
+        function aP() {
+            const pc = document.getElementById('pCont');
+            const d = document.createElement('div'); d.className = 'proof-item';
+            d.innerHTML = '<input type="text" class="p-url" placeholder="Link..." oninput="uU()"><button class="btn-del" onclick="this.parentElement.remove(); uU();">✕</button>';
+            pc.appendChild(d); pc.scrollTop = pc.scrollHeight; uU();
+        }
+        rS(); setInterval(uU, 1000);
+        // Lắng nghe thêm sự kiện nhập tên ở ô cName để cập nhật preview realtime
+        ['nSel', 'cName', 'tIn', 'rIn'].forEach(id => document.getElementById(id).addEventListener('input', uU));
+        window.onkeydown = (e) => { if ((e.ctrlKey || e.metaKey) && ['c', 'u', 's', 'p'].includes(e.key)) { e.preventDefault(); return false; } };
     </script>
 </body>
 
