@@ -737,6 +737,33 @@ ${lks}`;
             document.querySelectorAll('input').forEach(input => {
                 input.setAttribute('autocomplete', 'off');
             });
+            // Hàm lấy số tuần trong năm (ISO-8601)
+            function getWeekNumber(d) {
+                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+                var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return weekNo;
+            }
+
+            // Logic kiểm tra và Reset tự động
+            function checkAutoReset() {
+                const now = new Date();
+                const currentWeek = getWeekNumber(now);
+                const lastResetWeek = localStorage.getItem('lastResetWeek');
+
+                if (lastResetWeek && lastResetWeek != currentWeek) {
+                    // Nếu qua tuần mới, xóa dữ liệu cũ
+                    db = {};
+                    save();
+                    showToast("Đã tự động reset dữ liệu tuần mới!", "#4361ee");
+                }
+                // Cập nhật tuần hiện tại vào máy
+                localStorage.setItem('lastResetWeek', currentWeek);
+            }
+
+            // Gọi hàm này ngay khi trang web vừa load
+            checkAutoReset();
         </script>
 </body>
 
