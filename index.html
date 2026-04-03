@@ -458,6 +458,96 @@
                 transform: translateY(105vh) rotate(720deg);
             }
         }
+
+
+
+
+
+
+
+
+        /* Giao diện Popup mới - Hiện đại & Sang trọng */
+        .note-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            /* Màu nền tối sâu */
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(8px);
+            /* Độ mờ nền */
+        }
+
+        .note-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 24px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: zoomIn 0.3s ease;
+            /* Hiệu ứng hiện ra mượt */
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .note-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .note-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .note-option:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .note-close {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .note-close:hover {
+            color: #ef4444;
+        }
     </style>
 </head>
 
@@ -612,8 +702,7 @@
                             target="_blank" class="link-btn btn-task">📂 Task</a>
                         <a href="https://meet.google.com/wff-qguz-qin" target="_blank" class="link-btn btn-meet">📹
                             Meet</a>
-                        <a href="https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=0#gid=0&range=1:1"
-                            target="_blank" class="link-btn btn-note">📝 Note</a>
+                        <a href="javascript:void(0)" onclick="openNoteModal()" class="link-btn btn-note">📝 Note</a>
                     </div>
                 </div>
 
@@ -624,6 +713,7 @@
             </div>
         </div>
     </div>
+
     <script>
         let mode = '', isM = false, sIdx = -1;
         let db = JSON.parse(localStorage.getItem('workData_v16')) || {};
@@ -705,7 +795,50 @@ ${lks}`;
         function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); }
         function checkAutoReset() { const now = new Date(); const currentWeek = getWeekNumber(now); const lastResetWeek = localStorage.getItem('lastResetWeek'); if (lastResetWeek && lastResetWeek != currentWeek) { db = {}; save(); showToast("Đã tự động reset dữ liệu tuần mới!", "#4361ee"); } localStorage.setItem('lastResetWeek', currentWeek); }
         checkAutoReset();
+
+
+
+        let noteTimer; // Biến quản lý thời gian đóng popup
+
+        function openNoteModal() {
+            document.getElementById('noteModal').style.display = 'flex';
+
+            // Xóa timer cũ nếu có
+            clearTimeout(noteTimer);
+
+            // Thiết lập tự động đóng sau 5 phút (5 * 60 * 1000ms)
+            noteTimer = setTimeout(() => {
+                closeNoteModal();
+                console.log("Tự đóng sau 5 phút.");
+            }, 300000);
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').style.display = 'none';
+            clearTimeout(noteTimer); // Hủy timer khi người dùng chủ động đóng
+        }
+
+        // Giữ nguyên đoạn auto-refresh trang mỗi 10 phút của bạn ở đây
+        setTimeout(() => {
+            location.reload();
+        }, 600000);
+
+
     </script>
+    <div id="noteModal" class="note-modal" onclick="if(event.target==this) closeNoteModal()">
+        <div class="note-card">
+            <div class="note-title">📑 Chọn File Ghi Chú</div>
+
+            <a href="https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=0#gid=0"
+                target="_blank" class="note-option btn-tan">📝 Note Tân</a>
+            <a href="https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=1575942955#gid=1575942955"
+                target="_blank" class="note-option btn-huy">📝 Note Huy</a>
+            <a href="https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=62174830#gid=62174830"
+                target="_blank" class="note-option btn-khai">📝 Note Khải</a>
+
+            <div class="note-close" onclick="closeNoteModal()">✕ ĐÓNG CỬA SỔ</div>
+        </div>
+    </div>
 </body>
 
 </html>
