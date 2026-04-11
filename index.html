@@ -757,25 +757,75 @@ ${lks}`;
             } else { executeSave(); }
         }
 
-        function executeSave() {
-            navigator.clipboard.writeText(document.getElementById('preview').innerText).then(() => {
-                if (mode === 'check out') {
-                    const n = document.getElementById('nSel').value === 'custom' ? document.getElementById('cName').value : document.getElementById('nSel').value;
-                    if (n && n.trim() !== '') { const h = new Date().getHours() + new Date().getMinutes() / 60; const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]); db[n] = (db[n] || 0) + s.d; save(); }
-                    document.getElementById('bSave').disabled = true; document.getElementById('waitOverlay').style.display = 'flex';
-                    let tl = 3; document.getElementById('count').innerText = tl;
-                    const tm = setInterval(() => {
-                        tl--; document.getElementById('count').innerText = tl;
-                        if (tl <= 0) {
-                            clearInterval(tm); document.getElementById('waitOverlay').style.display = 'none';
-                            document.getElementById('tIn').value = ""; document.getElementById('rIn').value = "";
-                            document.getElementById('pCont').innerHTML = '<div class="proof-item"><input type="text" class="p-url" placeholder="Link 1..." oninput="uU()"></div><div class="proof-item"><input type="text" class="p-url" placeholder="Link 2..." oninput="uU()"></div><div class="proof-item"><input type="text" class="p-url" placeholder="Link 3..." oninput="uU()"></div>';
-                            document.getElementById('bSave').disabled = false; mode = 'check in'; uU(); launchConfetti(); showToast("Đã lưu giờ & Chúc mừng bạn hoàn thành ca!");
-                        }
-                    }, 1000);
-                } else { showToast("Đã copy Check-in thành công!"); launchConfetti(); }
-            });
+function executeSave() {
+    const previewText = document.getElementById('preview').innerText;
+    const selectedName = document.getElementById('nSel').value;
+    
+    const personalLinks = {
+        "Trương Nhật Tân": {
+            task: "https://docs.google.com/spreadsheets/d/1H-PBbeTA2B1Wtp82-SYnkuLCz0ygzgq_I9YCmmbBN_A/edit?gid=1187165451#gid=1187165451",
+            note: "https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=0#gid=0"
+        },
+        "Phan Quốc Huy": {
+            task: "https://docs.google.com/spreadsheets/d/1H-PBbeTA2B1Wtp82-SYnkuLCz0ygzgq_I9YCmmbBN_A/edit?gid=87223202#gid=87223202",
+            note: "https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=1575942955#gid=1575942955"
+        },
+        "Nguyễn Đức Khải": {
+            task: "https://docs.google.com/spreadsheets/d/1H-PBbeTA2B1Wtp82-SYnkuLCz0ygzgq_I9YCmmbBN_A/edit?gid=830862113#gid=830862113",
+            note: "https://docs.google.com/spreadsheets/d/1si0WhJNYZnQ89e8KhoWUlfiUKNgN9fRXVEeoJ5ibUJY/edit?gid=62174830#gid=62174830"
         }
+    };
+
+    navigator.clipboard.writeText(previewText).then(() => {
+        if (personalLinks[selectedName]) {
+            // Mở Task ngay lập tức
+            window.open(personalLinks[selectedName].task, "_blank");
+            
+            // Mở Note sau 600ms (tăng thời gian để trình duyệt không chặn)
+            setTimeout(() => {
+                window.open(personalLinks[selectedName].note, "_blank");
+            }, 600);
+        }
+
+        if (mode === 'check out') {
+            const n = selectedName === 'custom' ? document.getElementById('cName').value : selectedName;
+            if (n && n.trim() !== '') { 
+                const h = new Date().getHours() + new Date().getMinutes() / 60; 
+                const s = isM ? shifts[sIdx] : (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]); 
+                db[n] = (db[n] || 0) + s.d; 
+                save(); 
+            }
+            document.getElementById('bSave').disabled = true; 
+            document.getElementById('waitOverlay').style.display = 'flex';
+            let tl = 3; 
+            document.getElementById('count').innerText = tl;
+            const tm = setInterval(() => {
+                tl--; 
+                document.getElementById('count').innerText = tl;
+                if (tl <= 0) {
+                    clearInterval(tm); 
+                    document.getElementById('waitOverlay').style.display = 'none';
+                    document.getElementById('tIn').value = ""; 
+                    document.getElementById('rIn').value = "";
+                    document.getElementById('pCont').innerHTML = '<div class="proof-item"><input type="text" class="p-url" placeholder="Link 1..." oninput="uU()"></div><div class="proof-item"><input type="text" class="p-url" placeholder="Link 2..." oninput="uU()"></div><div class="proof-item"><input type="text" class="p-url" placeholder="Link 3..." oninput="uU()"></div>';
+                    document.getElementById('bSave').disabled = false; 
+                    mode = 'check in'; 
+                    uU(); 
+                    launchConfetti(); 
+                    showToast("Đã lưu & Đã mở đầy đủ 2 tab!");
+                }
+            }, 1000);
+        } else {
+            showToast("Đã copy! Đang mở tài liệu và vào Meet..."); 
+            launchConfetti(); 
+            
+            // Đợi mở xong 2 tab mới rồi mới chuyển hướng Meet
+            setTimeout(() => {
+                window.location.href = "https://meet.google.com/wff-qguz-qin";
+            }, 1200); 
+        }
+    });
+}
         window.addEventListener('keydown', (e) => { if (e.key === 'F12') { e.preventDefault(); document.getElementById('adminOverlay').style.display = 'flex'; document.getElementById('authBox').style.display = 'block'; document.getElementById('adminBox').style.display = 'none'; document.getElementById('passCode').value = ''; document.getElementById('passCode').focus(); } });
         function verifyPass() { if (document.getElementById('passCode').value === '2003') { document.getElementById('authBox').style.display = 'none'; document.getElementById('adminBox').style.display = 'block'; loadAdmin(); } else { showToast("Mã xác thực không đúng!", "#ef4444"); } }
         function loadAdmin() { const list = document.getElementById('adminList'); list.innerHTML = ''; const h = new Date().getHours() + new Date().getMinutes() / 60; const currentShift = (h >= 7 && h <= 12.5 ? shifts[0] : h >= 13 && h <= 18.5 ? shifts[1] : shifts[2]); Object.entries(db).forEach(([name, hours]) => { const div = document.createElement('div'); div.className = 'admin-item'; div.innerHTML = `<span>${name}: <b>${hours.toFixed(1)}h</b></span><div><button class="btn-adm btn-minus" onclick="adjTime('${name}', -${currentShift.d})">-${currentShift.d}h</button><button class="btn-adm btn-del-user" onclick="askConfirm('Xóa giờ của ${name}?', () => { delete db['${name}']; save(); loadAdmin(); showToast('Đã xóa nhân sự.'); })">XÓA</button></div>`; list.appendChild(div); }); }
