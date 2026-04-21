@@ -868,11 +868,30 @@ function executeSave() {
             clearTimeout(noteTimer); // Hủy timer khi người dùng chủ động đóng
         }
 
-        // Giữ nguyên đoạn auto-refresh trang mỗi 10 phút của bạn ở đây
-        setTimeout(() => {
-            location.reload();
-        }, 600000);
-
+        // Quản lý việc tự động reload sau 20 phút
+        function scheduleReload() {
+            setTimeout(() => {
+                const taskInput = document.getElementById('tIn').value.trim();
+                const resultInput = document.getElementById('rIn').value.trim();
+        
+                // Nếu không có nội dung đang nhập, tự động load lại để cập nhật giờ chính xác
+                if (taskInput === "" && resultInput === "") {
+                    location.reload();
+                } else {
+                    // Nếu đang bận nhập báo cáo, hỏi ý kiến
+                    askConfirm("Đã 20 phút trôi qua, bạn có muốn load lại trang để dữ liệu đồng bộ chính xác không?", () => {
+                        location.reload();
+                    });
+                    
+                    // Nếu người dùng bấm Hủy (thông qua hàm askConfirm), 
+                    // 5 phút sau sẽ kiểm tra lại một lần nữa
+                    setTimeout(scheduleReload, 600000); // 10 phút
+                }
+            }, 1200000); // 20 phút
+        }
+        
+        // Kích hoạt lần đầu khi mở trang
+        scheduleReload();
 
     </script>
     <div id="noteModal" class="note-modal" onclick="if(event.target==this) closeNoteModal()">
